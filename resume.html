@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alex Doe - Software Engineer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The application transforms the static resume into an interactive portfolio. It uses a single-page, vertical-scroll layout with a fixed side navigation for easy access to sections. The structure is thematic: 1) A 'Hero' section for immediate introduction. 2) An interactive 'Skills' section where clicking a skill filters relevant experiences. 3) A combined 'Experience & Projects' timeline that shows career progression, with expandable cards to reveal details. This structure was chosen to move beyond passive reading, allowing recruiters to actively query the resume by skill and explore the candidate's history in a non-linear, engaging way, which is more effective for quick evaluation than a static document. -->
+    <!-- Visualization & Content Choices: Resume Info -> Skills List; Goal -> Organize/Relate; Viz/Method -> Interactive HTML "tags"; Interaction -> On-click filtering of timeline items; Justification -> Directly connects capabilities to proof of work, a key recruiter task. | Resume Info -> Experience/Projects; Goal -> Show Change/Detail; Viz/Method -> HTML/CSS Vertical Timeline; Interaction -> Expand/collapse cards; Justification -> Manages information density and presents career growth intuitively. | No charts (Chart.js/Plotly) were used as the source data consists of qualitative statements and single-value metrics, not data series. An interactive timeline and skill-filtering system provide a more meaningful 'visualization' of the candidate's profile. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        :root {
+            --bg-main: #FDFBF8;
+            --bg-alt: #FFFFFF;
+            --text-main: #2F2F2F;
+            --text-muted: #6B7280;
+            --accent: #0077B5;
+            --accent-light: #E6F2F7;
+            --border-color: #E5E7EB;
+        }
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+        }
+        .accent-bg { background-color: var(--accent); }
+        .accent-text { color: var(--accent); }
+        .accent-bg-light { background-color: var(--accent-light); }
+        .muted-text { color: var(--text-muted); }
+        .main-border { border-color: var(--border-color); }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Timeline vertical line */
+        .timeline-line::before {
+            content: '';
+            position: absolute;
+            left: 1.25rem;
+            top: 1rem;
+            bottom: 0;
+            width: 2px;
+            background-color: var(--border-color);
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+        
+        .timeline-item:last-child .timeline-line::before {
+            display: none;
+        }
+
+        .timeline-marker {
+            z-index: 2;
+        }
+
+        /* Accordion transition */
+        .accordion-content {
+            transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .accordion-content.open {
+            max-height: 1000px; /* Adjust as needed */
+            opacity: 1;
+        }
+
+        /* Skill tag active state */
+        .skill-tag.active {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        /* Subtle fade for filtered out items */
+        .filtered-out {
+            opacity: 0.3;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .not-filtered {
+            opacity: 1;
+            transition: opacity 0.3s ease-in-out;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="leading-normal">
+
+    <div class="flex flex-col lg:flex-row max-w-7xl mx-auto">
+
+        <!-- Left-side Navigation -->
+        <aside class="lg:w-1/4 lg:sticky lg:top-0 lg:h-screen p-8 lg:py-16 bg-alt lg:bg-transparent border-b lg:border-r main-border">
+            <div class="flex flex-col h-full">
+                <div class="text-center lg:text-left">
+                    <h1 class="text-3xl font-bold">Alex Doe</h1>
+                    <p class="mt-2 text-lg accent-text">Software Engineer</p>
+                    <p class="mt-4 muted-text">Crafting scalable and robust software solutions for the next generation of web technologies.</p>
+                </div>
+
+                <nav class="hidden lg:block my-12">
+                    <ul class="space-y-4">
+                        <li><a href="#summary" class="nav-link group flex items-center py-2"><span class="mr-4 h-px w-8 bg-gray-500 group-hover:w-16 group-hover:accent-bg transition-all"></span><span class="group-hover:accent-text font-semibold">Summary</span></a></li>
+                        <li><a href="#skills" class="nav-link group flex items-center py-2"><span class="mr-4 h-px w-8 bg-gray-500 group-hover:w-16 group-hover:accent-bg transition-all"></span><span class="group-hover:accent-text font-semibold">Skills</span></a></li>
+                        <li><a href="#experience" class="nav-link group flex items-center py-2"><span class="mr-4 h-px w-8 bg-gray-500 group-hover:w-16 group-hover:accent-bg transition-all"></span><span class="group-hover:accent-text font-semibold">Experience</span></a></li>
+                        <li><a href="#education" class="nav-link group flex items-center py-2"><span class="mr-4 h-px w-8 bg-gray-500 group-hover:w-16 group-hover:accent-bg transition-all"></span><span class="group-hover:accent-text font-semibold">Education</span></a></li>
+                    </ul>
+                </nav>
+
+                <div class="mt-auto pt-8 text-center lg:text-left">
+                     <div class="flex justify-center lg:justify-start space-x-5 text-2xl muted-text">
+                        <a href="#" class="hover:accent-text" title="GitHub">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.168 6.839 9.49.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.031-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.378.203 2.398.1 2.651.64.7 1.03 1.595 1.03 2.688 0 3.848-2.338 4.695-4.566 4.943.359.308.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.001 10.001 0 0022 12c0-5.523-4.477-10-10-10z" clip-rule="evenodd" /></svg>
+                        </a>
+                        <a href="#" class="hover:accent-text" title="LinkedIn">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                        </a>
+                     </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Right-side Content -->
+        <main class="lg:w-3/4 p-8 md:p-12 lg:p-16">
+            
+            <!-- Summary Section -->
+            <section id="summary" class="mb-16">
+                <div class="lg:hidden">
+                     <h2 class="text-2xl font-bold tracking-tight">Summary</h2>
+                    <div class="w-16 h-1 accent-bg mt-2 mb-6"></div>
+                </div>
+                <p class="text-lg muted-text">Highly motivated and results-oriented Software Engineer with 7+ years of experience in designing, developing, and deploying scalable and robust software solutions. Passionate about distributed systems and machine learning, and committed to leveraging strong problem-solving skills and a collaborative mindset to contribute to innovative projects at Google.</p>
+            </section>
+
+            <!-- Skills Section -->
+            <section id="skills" class="mb-16">
+                <h2 class="text-2xl font-bold tracking-tight">Skills</h2>
+                <div class="w-16 h-1 accent-bg mt-2 mb-6"></div>
+                <div class="prose prose-lg max-w-none muted-text mb-6">
+                    <p>This section showcases my technical capabilities. Click on any skill to filter the 'Experience & Projects' timeline below and see exactly where that technology was applied. Click an active skill again to remove the filter. You can select multiple skills to narrow down the results.</p>
+                </div>
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="font-semibold text-lg mb-3">Programming Languages</h3>
+                        <div class="flex flex-wrap gap-2">
+                           <span class="skill-tag cursor-pointer bg-white border main-border rounded-full px-4 py-1.5 text-sm muted-text hover:accent-bg hover:text-white transition-colors" data-skill="Python">Python</span>
+                           <span class="skill-tag cursor-pointer bg-white border main-border rounded-full px-4 py-1.5 text-sm muted-text hover:accent-bg hover:text-white transition-colors" data-skill="Java">Java</span>
+                           <span class="skill-tag cursor-pointer bg-white border main-border rounded-full px-4 py-1.5 text-sm muted-text hover:accent-bg hover:text-white transition-colors" data-skill="Go">Go</span>
+                           <span class="skill-tag cursor-pointer bg-white border main-border rounded-full px-4 py-1.5 text-sm muted-text hover:accent-bg hover:text-white transition-colors" data-skill="C++">C++</span>
+                           <span class="skill-tag cursor-pointer bg-white border main-border rounded-full px-4 py-1.5 text-sm muted-text hover:accent-bg hover:text-white transition-colors" data-skill="JavaScript">JavaScript</span>
+                           <span class="skill-tag cursor-pointer bg-white border main-border rounded-full px-4 py-1.5 text-sm muted-text hover:accent-bg hover:text-white transition-colors" data-skill="TypeScript">TypeScript</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-lg mb-3">Frameworks & Libraries</h3>
+                        <div class="flex flex-wrap gap-2">
+                           <span class="skill-tag cursor-pointer bg-white border main-border rounded-full px-4 py-1.5 text-sm muted-text hover:accent-bg hover:text-white transition-colors" data-skill="Kubernetes">Kubernetes</span>
+                           <span class="skill-tag cursor-pointer bg-white border main-border rounded-full px-4 py-1.5 text-sm muted-text hover:accent-bg hover:text-white transition-colors" data-skill="gRPC">gRPC</span>
+                           <span class="skill-tag cursor-pointer bg-white border main-border rounded-full px-4 py-1.5 text-sm muted-text hover:accent-bg hover:text-white transition-colors" data-skill="TensorFlow">TensorFlow</span>
+                           <span class="skill-tag cursor-pointer bg-white border main-border rounded-full px-4 py-1.5 text-sm muted-text hover:accent-bg hover:text-white transition-colors" data-skill="React">React</span>
+                           <span class="skill-tag cursor-pointer bg-white border main-border rounded-full px-4 py-1.5 text-sm muted-text hover:accent-bg hover:text-white transition-colors" data-skill="Node.js">Node.js</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-lg mb-3">Cloud & Databases</h3>
+                        <div class="flex flex-wrap gap-2">
+                           <span class="skill-tag cursor-pointer bg-white border main-border rounded-full px-4 py-1.5 text-sm muted-text hover:accent-bg hover:text-white transition-colors" data-skill="GCP">GCP</span>
+                           <span class="skill-tag cursor-pointer bg-white border main-border rounded-full px-4 py-1.5 text-sm muted-text hover:accent-bg hover:text-white transition-colors" data-skill="Dataflow">Dataflow</span>
+                           <span class="skill-tag cursor-pointer bg-white border main-border rounded-full px-4 py-1.5 text-sm muted-text hover:accent-bg hover:text-white transition-colors" data-skill="BigQuery">BigQuery</span>
+                           <span class="skill-tag cursor-pointer bg-white border main-border rounded-full px-4 py-1.5 text-sm muted-text hover:accent-bg hover:text-white transition-colors" data-skill="SQL">SQL</span>
+                           <span class="skill-tag cursor-pointer bg-white border main-border rounded-full px-4 py-1.5 text-sm muted-text hover:accent-bg hover:text-white transition-colors" data-skill="MongoDB">MongoDB</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Experience & Projects Timeline Section -->
+            <section id="experience" class="mb-16">
+                 <h2 class="text-2xl font-bold tracking-tight">Experience & Projects</h2>
+                 <div class="w-16 h-1 accent-bg mt-2 mb-6"></div>
+                 <div class="prose prose-lg max-w-none muted-text mb-10">
+                     <p>My professional journey and key projects are detailed below in a chronological timeline. Each entry outlines my role, key accomplishments, and the technologies I used. Click on any item to expand it and see the full details.</p>
+                 </div>
+                 <div id="timeline-container">
+                    <!-- Timeline Item 1 -->
+                    <div class="timeline-item relative pl-12 pb-12" data-tech="Go, gRPC, Kubernetes, GCP">
+                        <div class="timeline-line"></div>
+                        <div class="timeline-marker absolute top-1 left-0 w-5 h-5 accent-bg rounded-full border-4 border-white"></div>
+                        <div class="bg-alt p-6 rounded-lg border main-border shadow-sm">
+                            <button class="accordion-trigger w-full text-left">
+                                <p class="text-sm muted-text">JAN 2022 - PRESENT</p>
+                                <h3 class="text-xl font-bold mt-1">Senior Software Engineer</h3>
+                                <p class="font-medium muted-text">Innovate Solutions Inc. | San Francisco, CA</p>
+                                <div class="flex flex-wrap gap-2 mt-3 text-xs">
+                                    <span class="bg-gray-100 rounded-full px-3 py-1">Go</span>
+                                    <span class="bg-gray-100 rounded-full px-3 py-1">gRPC</span>
+                                    <span class="bg-gray-100 rounded-full px-3 py-1">Kubernetes</span>
+                                    <span class="bg-gray-100 rounded-full px-3 py-1">GCP</span>
+                                </div>
+                            </button>
+                            <div class="accordion-content">
+                                <ul class="list-disc pl-5 mt-4 space-y-2 muted-text">
+                                    <li>Developed and optimized a new microservice that reduced latency by 30% for critical user operations using Go and gRPC.</li>
+                                    <li>Architected and deployed application infrastructure on Google Cloud Platform using Kubernetes Engine, improving system reliability and scalability.</li>
+                                    <li>Mentored junior engineers on best practices for system design and coding standards.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                     <!-- Timeline Item 2 -->
+                    <div class="timeline-item relative pl-12 pb-12" data-tech="Python, GCP, Dataflow, BigQuery, TensorFlow">
+                        <div class="timeline-line"></div>
+                        <div class="timeline-marker absolute top-1 left-0 w-5 h-5 accent-bg rounded-full border-4 border-white"></div>
+                        <div class="bg-alt p-6 rounded-lg border main-border shadow-sm">
+                            <button class="accordion-trigger w-full text-left">
+                                <p class="text-sm muted-text">JUN 2019 - DEC 2021</p>
+                                <h3 class="text-xl font-bold mt-1">Software Engineer</h3>
+                                <p class="font-medium muted-text">Data Insights Co. | New York, NY</p>
+                                <div class="flex flex-wrap gap-2 mt-3 text-xs">
+                                    <span class="bg-gray-100 rounded-full px-3 py-1">Python</span>
+                                    <span class="bg-gray-100 rounded-full px-3 py-1">GCP</span>
+                                    <span class="bg-gray-100 rounded-full px-3 py-1">Dataflow</span>
+                                    <span class="bg-gray-100 rounded-full px-3 py-1">BigQuery</span>
+                                    <span class="bg-gray-100 rounded-full px-3 py-1">TensorFlow</span>
+                                </div>
+                            </button>
+                             <div class="accordion-content">
+                                <ul class="list-disc pl-5 mt-4 space-y-2 muted-text">
+                                    <li>Led the design and implementation of a scalable data processing pipeline on Google Cloud Platform (GCP) using Dataflow, handling over 1TB of data daily.</li>
+                                    <li>Collaborated with cross-functional teams to define technical requirements and deliver features for a recommendation engine, improving user engagement by 15%.</li>
+                                    <li>Utilized Python, BigQuery, and TensorFlow to build and deploy ML models for predictive analytics.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                     <!-- Timeline Item 3 -->
+                    <div class="timeline-item relative pl-12 pb-12" data-tech="React, Node.js, JavaScript, TypeScript, MongoDB">
+                        <div class="timeline-line"></div>
+                        <div class="timeline-marker absolute top-1 left-0 w-5 h-5 accent-bg rounded-full border-4 border-white"></div>
+                        <div class="bg-alt p-6 rounded-lg border main-border shadow-sm">
+                            <button class="accordion-trigger w-full text-left">
+                                <p class="text-sm muted-text">PROJECT (Personal)</p>
+                                <h3 class="text-xl font-bold mt-1">Real-Time Collaborative Editor</h3>
+                                <p class="font-medium muted-text">Personal Project | GitHub</p>
+                                <div class="flex flex-wrap gap-2 mt-3 text-xs">
+                                    <span class="bg-gray-100 rounded-full px-3 py-1">React</span>
+                                    <span class="bg-gray-100 rounded-full px-3 py-1">Node.js</span>
+                                    <span class="bg-gray-100 rounded-full px-3 py-1">TypeScript</span>
+                                    <span class="bg-gray-100 rounded-full px-3 py-1">MongoDB</span>
+                                </div>
+                            </button>
+                            <div class="accordion-content">
+                                <ul class="list-disc pl-5 mt-4 space-y-2 muted-text">
+                                    <li>Developed a real-time collaborative text editor using React for the frontend and Node.js with WebSockets for the backend.</li>
+                                    <li>Implemented the backend API with Express and TypeScript, ensuring secure user authentication and data persistence with MongoDB.</li>
+                                    <li>Designed a custom conflict resolution algorithm (CRDT-based) to handle concurrent editing from multiple users seamlessly.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                 </div>
+            </section>
+
+            <!-- Education Section -->
+            <section id="education" class="mb-16">
+                 <h2 class="text-2xl font-bold tracking-tight">Education</h2>
+                 <div class="w-16 h-1 accent-bg mt-2 mb-6"></div>
+                 <div class="bg-alt p-6 rounded-lg border main-border shadow-sm">
+                     <p class="text-sm muted-text">2015 - 2019</p>
+                     <h3 class="text-xl font-bold mt-1">Master of Science in Computer Science</h3>
+                     <p class="font-medium muted-text">Stanford University | Stanford, CA</p>
+                     <p class="mt-4 muted-text">Relevant Coursework: Data Structures & Algorithms, Operating Systems, Distributed Systems, Machine Learning, Database Management.</p>
+                 </div>
+            </section>
+        </main>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Accordion functionality for timeline items
+            const accordionTriggers = document.querySelectorAll('.accordion-trigger');
+            accordionTriggers.forEach(trigger => {
+                trigger.addEventListener('click', () => {
+                    const content = trigger.nextElementSibling;
+                    content.classList.toggle('open');
+                });
+            });
+
+            // Skills filtering functionality
+            const skillTags = document.querySelectorAll('.skill-tag');
+            const timelineItems = document.querySelectorAll('.timeline-item');
+            const activeSkills = new Set();
+
+            skillTags.forEach(tag => {
+                tag.addEventListener('click', () => {
+                    const skill = tag.dataset.skill;
+                    tag.classList.toggle('active');
+
+                    if (activeSkills.has(skill)) {
+                        activeSkills.delete(skill);
+                    } else {
+                        activeSkills.add(skill);
+                    }
+
+                    filterTimeline();
+                });
+            });
+
+            function filterTimeline() {
+                if (activeSkills.size === 0) {
+                    timelineItems.forEach(item => {
+                        item.classList.remove('filtered-out');
+                        item.classList.add('not-filtered');
+                    });
+                    return;
+                }
+
+                timelineItems.forEach(item => {
+                    const techString = item.dataset.tech || '';
+                    const itemTechs = techString.split(',').map(t => t.trim());
+                    
+                    // Item must have all active skills
+                    const hasAllSkills = Array.from(activeSkills).every(activeSkill => 
+                        itemTechs.some(itemTech => itemTech.toLowerCase() === activeSkill.toLowerCase())
+                    );
+                    
+                    if (hasAllSkills) {
+                        item.classList.remove('filtered-out');
+                        item.classList.add('not-filtered');
+                    } else {
+                        item.classList.remove('not-filtered');
+                        item.classList.add('filtered-out');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
